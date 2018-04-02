@@ -1,0 +1,141 @@
+LAMMPS (17 Nov 2015)
+WARNING: OMP_NUM_THREADS environment is not set. (../comm.cpp:90)
+  using 1 OpenMP thread(s) per MPI task
+# Cu
+
+#*******INITILIZATION******
+units		metal
+dimension	3
+boundary 	p p p
+atom_style	atomic
+atom_modify map array
+
+#********CREATION OF ATOMS********
+lattice		sc 2.64
+Lattice spacing in x,y,z = 2.64 2.64 2.64
+region		box block 0 1 0 1 0 1 units lattice
+create_box	1 box
+Created orthogonal box = (0 0 0) to (2.64 2.64 2.64)
+  1 by 1 by 1 MPI processor grid
+
+lattice		sc 2.64 orient x 1 0 0 orient y 0 1 0 orient z 0 0 1
+Lattice spacing in x,y,z = 2.64 2.64 2.64
+create_atoms	1 box
+Created 1 atoms
+replicate 	1 1 1
+  orthogonal box = (0 0 0) to (2.64 2.64 2.64)
+  1 by 1 by 1 MPI processor grid
+  1 atoms
+#mass		1 1.0
+#velocity	all create 5.0 87287 loop geom
+
+#***DEFINING FORCE INTERATOMIC POTENTIAL**********
+pair_style	eam/alloy
+pair_coeff	* * Cu01.eam.alloy Cu
+pair_modify	shift yes
+neighbor	1 bin
+#neigh_modify 	delay 10 check yes
+neigh_modify	delay 0 every 1 check yes
+
+#****COMPUTE******
+compute eng all pe/atom
+compute eatoms all reduce sum c_eng
+
+# ---------- Run Minimization ---------------------
+reset_timestep 0
+timestep 0.007
+#fix		1 all nve
+fix 1 all box/relax iso 0.0 vmax 0.001
+
+#set thermo output
+thermo 5
+thermo_style custom step lx ly lz pe press pxx pyy pzz c_eatoms
+
+
+min_style cg
+minimize	1.0e-6 0.001 1000 10000
+Neighbor list info ...
+  1 neighbor list requests
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 6.50679
+  ghost atom cutoff = 6.50679
+  binsize = 3.25339 -> bins = 1 1 1
+Memory usage per processor = 3.41069 Mbytes
+Step Lx Ly Lz PotEng Press Pxx Pyy Pzz eatoms 
+       0         2.64         2.64         2.64   -2.8010725   -151458.07   -151458.07   -151458.07   -151458.07   -2.8010725 
+       5       2.6268       2.6268       2.6268   -2.8268336   -149073.44   -149073.44   -149073.44   -149073.44   -2.8268336 
+      10       2.6136       2.6136       2.6136   -2.8519047   -146362.44   -146362.44   -146362.44   -146362.44   -2.8519047 
+      15       2.6004       2.6004       2.6004    -2.876241   -143322.99   -143322.99   -143322.99   -143322.99    -2.876241 
+      20       2.5872       2.5872       2.5872   -2.8997984   -139947.19   -139947.19   -139947.19   -139947.19   -2.8997984 
+      25        2.574        2.574        2.574   -2.9225319   -136213.92   -136213.92   -136213.92   -136213.92   -2.9225319 
+      30       2.5608       2.5608       2.5608   -2.9443937   -132083.21   -132083.21   -132083.21   -132083.21   -2.9443937 
+      35       2.5476       2.5476       2.5476   -2.9653291   -127492.83   -127492.83   -127492.83   -127492.83   -2.9653291 
+      40       2.5344       2.5344       2.5344   -2.9852741   -122358.72   -122358.72   -122358.72   -122358.72   -2.9852741 
+      45       2.5212       2.5212       2.5212   -3.0041522   -116578.81   -116578.81   -116578.81   -116578.81   -3.0041522 
+      50        2.508        2.508        2.508   -3.0218725   -110038.92   -110038.92   -110038.92   -110038.92   -3.0218725 
+      55       2.4948       2.4948       2.4948   -3.0383294   -102618.68   -102618.68   -102618.68   -102618.68   -3.0383294 
+      60       2.4816       2.4816       2.4816   -3.0534027   -94196.318   -94196.318   -94196.318   -94196.318   -3.0534027 
+      65       2.4684       2.4684       2.4684    -3.066958   -84651.722   -84651.722   -84651.722   -84651.722    -3.066958 
+      70       2.4552       2.4552       2.4552   -3.0788481   -73863.849   -73863.849   -73863.849   -73863.849   -3.0788481 
+      75        2.442        2.442        2.442   -3.0889097   -61648.223   -61648.223   -61648.223   -61648.223   -3.0889097 
+      80       2.4288       2.4288       2.4288   -3.0969537   -47775.453   -47775.453   -47775.453   -47775.453   -3.0969537 
+      85       2.4156       2.4156       2.4156   -3.1027662   -32033.906   -32033.906   -32033.906   -32033.906   -3.1027662 
+      90       2.4024       2.4024       2.4024   -3.1061128   -14240.444   -14240.444   -14240.444   -14240.444   -3.1061128 
+      94    2.3928516    2.3928516    2.3928516    -3.106856   -8.5378985   -8.5378985   -8.5378985   -8.5378985    -3.106856 
+Loop time of 0.00140309 on 1 procs for 94 steps with 1 atoms
+
+0.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = force tolerance
+  Energy initial, next-to-last, final = 
+        -2.80107250455     -3.10683386095     -3.10685599139
+  Force two-norm initial, final = 5.21813 0.000241656
+  Force max component initial, final = 5.21813 0.000241656
+  Final line search alpha, max atom move = 0.0140087 3.38529e-06
+  Iterations, force evaluations = 94 95
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.00045204 | 0.00045204 | 0.00045204 |   0.0 | 32.22
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00012994 | 0.00012994 | 0.00012994 |   0.0 |  9.26
+Output  | 0.00030351 | 0.00030351 | 0.00030351 |   0.0 | 21.63
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.0005176  |            |       | 36.89
+
+Nlocal:    1 ave 1 max 1 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    215 ave 215 max 215 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    40 ave 40 max 40 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 40
+Ave neighs/atom = 40
+Neighbor list builds = 0
+Dangerous builds = 0
+
+variable noatoms equal "count(all)"
+variable tleng equal "c_eatoms"
+variable length equal "lx"
+variable engcoh equal "v_tleng/v_noatoms"
+
+print "Total_Energy (eV) = ${tleng};"
+Total_Energy (eV) = -3.10685599138902;
+print "Number_of_Atoms = ${noatoms};"
+Number_of_Atoms = 1;
+print "Lattice_Constant (Angstoms) = ${length};"
+Lattice_Constant (Angstoms) = 2.3928515722885;
+print "Energy (eV) = ${engcoh};"
+Energy (eV) = -3.10685599138902;
+
+print "All done!"
+All done!
+
+
+#thermo		50
+
+Total wall time: 0:00:00

@@ -1,0 +1,85 @@
+# ------------------------ INITIALIZATION ----------------------------
+units 		metal
+dimension	3
+boundary	p	p	p
+atom_style	atomic
+variable latparam equal 3.615
+
+# ----------------------- ATOM DEFINITION ----------------------------
+lattice		fcc ${latparam}
+#stretch
+#region		whole block 0 10 0 10 0 10 
+#shear
+region		whole prism 0 10 0 10 0 10  0 0 0
+create_box	1 whole
+
+lattice 	fcc ${latparam} orient x 1 0 0 orient y 0 1 0 orient z 0 0 1
+create_atoms	1 region whole
+replicate 	1 1 1
+
+# ------------------------ FORCE FIELDS ------------------------------
+pair_style	eam/alloy
+pair_coeff	* * Cu01.eam.alloy Cu
+
+
+# ------------------- EQUILIBRATION-------------------------
+reset_timestep	0
+timestep 0.001
+velocity all zero linear
+fix 1 all npt temp 1 1 1 iso 0 0 1 drag 1 
+
+# Set thermo output
+thermo 100
+thermo_style custom step lx ly lz press pxx pyy pzz pe temp
+
+# Run 
+run 500
+unfix 1
+
+# Store final cell length for strain calculations
+variable tmp equal "lx"
+variable L0 equal ${tmp}
+variable tmp1 equal "pe"
+variable inEn equal ${tmp1}
+print "Initial Length, L0: ${L0}"
+print "Initial PE in eV, L0: ${inEn}"
+
+
+# -------------DEFORMATION-------------
+reset_timestep	0
+
+#fix		1 all npt temp 1 1 1 y 0 0 1 z 0 0 1 drag 1
+fix		1 all npt temp 1 1 1  z 0 0 1 drag 1
+#fix			1 all npt temp 1 1 1  x 0 0 1 y 0 0 1 drag 1
+variable srate equal 1.0e10
+variable srate1 equal "v_srate / 1.0e12"
+#fix		2 all deform 1 x erate ${srate1} units box remap x
+#C12
+fix		2 all deform 1 x erate ${srate1} y erate ${srate1} units box remap x
+#C44
+#fix		2 all deform 1 xy erate ${srate1} units box remap x
+
+# Output strain and stress info to file
+# for units metal, lx in angstrom pe in eV
+#  p3 in N/m^2
+variable strain1 equal "(lx - v_L0)/v_L0"
+variable p1 equal "v_strain1"
+#variable p2 equal "-pxx*10000"
+#variable p3 equal  "v_inEn-pe "
+variable p3 equal "((pe - v_inEn)*1.60218*1.0e11)/(lx*ly*lz)"
+
+fix def1 all print 100 "${p1} ${p3} " file Cu_C11.txt screen no
+
+# Use cfg for AtomEye
+dump 		1 all cfg 250 dump.tensile_*.cfg mass type xs ys zs fx fy fz
+
+
+# Display thermo
+thermo 	1000
+thermo_style	custom step v_strain1 temp v_p3  ke pe press lx
+
+run		20000
+
+######################################
+# SIMULATION DONE
+print "All done"
